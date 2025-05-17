@@ -12,39 +12,39 @@ export const issueCredential = asyncHandler(async (req, res) => {
     throw new ValidationError('No metadata provided');
   }
 
-  const credential = {
-    metadata: req.body,
-    file: req.file
-  };
+    const credential = {
+      metadata: req.body,
+      file: req.file
+    };
 
-  // Generate hash of the credential
-  const hash = await hashCredential(credential);
+    // Generate hash of the credential
+    const hash = await hashCredential(credential);
 
-  // Sign the hash
-  const signature = await generateSignature(hash);
+    // Sign the hash
+    const signature = await generateSignature(hash);
 
-  // Add to blockchain and get Merkle proof
-  const { transactionId, merkleProof } = await addToBlockchain(hash);
+    // Add to blockchain and get Merkle proof
+    const { transactionId, merkleProof } = await addToBlockchain(hash);
 
-  // Save credential with signature and Merkle proof
-  const savedCredential = await saveCredential({
-    ...credential,
-    hash,
-    signature,
-    merkleProof,
-    blockchainTxId: transactionId
-  });
-
-  res.status(201).json({
-    status: 'success',
-    data: {
-      id: savedCredential.id,
+    // Save credential with signature and Merkle proof
+    const savedCredential = await saveCredential({
+      ...credential,
       hash,
       signature,
       merkleProof,
       blockchainTxId: transactionId
-    }
-  });
+    });
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+        id: savedCredential.id,
+        hash,
+        signature,
+        merkleProof,
+        blockchainTxId: transactionId
+      }
+    });
 });
 
 export const getCredential = async (req, res) => {
@@ -67,29 +67,29 @@ export const getCredential = async (req, res) => {
 };
 
 export const verifyCredential = asyncHandler(async (req, res) => {
-  const { hash, signature, merkleProof } = req.body;
+    const { hash, signature, merkleProof } = req.body;
 
   if (!hash || !signature || !merkleProof) {
     throw new ValidationError('Missing required fields: hash, signature, or merkleProof');
   }
 
-  // Verify signature
-  const isSignatureValid = await verifySignature(hash, signature);
-  if (!isSignatureValid) {
+    // Verify signature
+    const isSignatureValid = await verifySignature(hash, signature);
+    if (!isSignatureValid) {
     throw new ValidationError('Invalid signature');
-  }
+    }
 
-  // Verify Merkle proof
-  const isMerkleValid = await verifyMerkleProof(hash, merkleProof);
-  if (!isMerkleValid) {
+    // Verify Merkle proof
+    const isMerkleValid = await verifyMerkleProof(hash, merkleProof);
+    if (!isMerkleValid) {
     throw new ValidationError('Invalid Merkle proof');
-  }
+    }
 
-  res.json({
+    res.json({ 
     status: 'success',
     data: {
       valid: true,
       message: 'Credential verified successfully'
     }
-  });
-}); 
+    });
+    });

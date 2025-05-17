@@ -74,6 +74,18 @@ export const getCredentialsByBlockId = async (blockId) => {
   }
 };
 
+export const getAllCredentials = async () => {
+  try {
+    const credentials = await db('credentials')
+      .select('*')
+      .orderBy('createdAt', 'desc');
+    return credentials;
+  } catch (error) {
+    logger.error('Error getting all credentials:', error);
+    throw new Error('Failed to get credentials');
+  }
+};
+
 // Cleanup
 export const closeDatabase = async () => {
   try {

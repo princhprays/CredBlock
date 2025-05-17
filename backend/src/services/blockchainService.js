@@ -19,29 +19,29 @@ const web3 = process.env.NODE_ENV === 'production'
 // Initialize SQLite database
 const initDatabase = async () => {
   try {
-    const db = await open({
-      filename: join(__dirname, '../../data/blockchain.db'),
-      driver: sqlite3.Database
-    });
+  const db = await open({
+    filename: join(__dirname, '../../data/blockchain.db'),
+    driver: sqlite3.Database
+  });
 
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS blocks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        merkleRoot TEXT NOT NULL,
-        previousHash TEXT,
-        timestamp INTEGER NOT NULL,
-        transactionId TEXT
-      );
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS blocks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      merkleRoot TEXT NOT NULL,
+      previousHash TEXT,
+      timestamp INTEGER NOT NULL,
+      transactionId TEXT
+    );
 
-      CREATE TABLE IF NOT EXISTS credentials (
-        hash TEXT PRIMARY KEY,
-        merkleProof TEXT NOT NULL,
-        blockId INTEGER,
-        FOREIGN KEY (blockId) REFERENCES blocks(id)
-      );
-    `);
+    CREATE TABLE IF NOT EXISTS credentials (
+      hash TEXT PRIMARY KEY,
+      merkleProof TEXT NOT NULL,
+      blockId INTEGER,
+      FOREIGN KEY (blockId) REFERENCES blocks(id)
+    );
+  `);
 
-    return db;
+  return db;
   } catch (error) {
     throw new BlockchainError('Failed to initialize database');
   }

@@ -12,7 +12,8 @@
     "migrate:rollback": "knex migrate:rollback",
     "migrate:make": "knex migrate:make",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "reset-db": "node src/scripts/resetDb.js"
   },
   "dependencies": {
     "express": "^4.18.2",

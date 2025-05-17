@@ -16,6 +16,7 @@ import { initializeDatabase } from './services/databaseService.js';
 import credentialRoutes from './routes/credentialRoutes.js';
 import blockchainRoutes from './routes/blockchainRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
+import snapshotRoutes from './routes/snapshotRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -46,6 +47,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.use('/api/credentials', credentialRoutes);
 app.use('/api/blockchain', blockchainRoutes);
 app.use('/api/verify', verificationRoutes);
+app.use('/api/snapshots', snapshotRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
@@ -53,7 +55,10 @@ app.use(errorHandler);
 // Initialize database and start server
 const startServer = async () => {
   try {
+    // Initialize database
     await initializeDatabase();
+    
+    // Start server
     app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
       logger.info(`API Documentation available at http://localhost:${PORT}/api-docs`);
@@ -63,5 +68,22 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+
+// Handle uncaught errors
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error);
+  // Don't exit the process for Redis connection errors
+  if (!error.message.includes('ECONNREFUSED')) {
+    process.exit(1);
+  }
+});
+
+process.on('unhandledRejection', (error) => {
+  logger.error('Unhandled Rejection:', error);
+  // Don't exit the process for Redis connection errors
+  if (!error.message.includes('ECONNREFUSED')) {
+    process.exit(1);
+  }
+});
 
 startServer(); 

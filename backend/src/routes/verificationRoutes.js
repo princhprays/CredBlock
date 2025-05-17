@@ -3,8 +3,8 @@ import multer from 'multer';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { 
-  verifyCredential,
-  verifySignature
+  verifyCredential, 
+  verifySignature 
 } from '../services/verificationService.js';
 import { verifyCredentialHash } from '../controllers/verificationController.js';
 import { validate } from '../middleware/validation.js';
@@ -26,7 +26,7 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({
+const upload = multer({ 
   storage,
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/pdf' || file.mimetype === 'application/json') {
