@@ -1,47 +1,51 @@
 import { generateSignature, hashCredential } from '../services/cryptoService.js';
 import { addToBlockchain } from '../services/blockchainService.js';
 import { saveCredential } from '../services/storageService.js';
+import { asyncHandler, ValidationError, BlockchainError } from '../utils/errors.js';
 
-export const issueCredential = async (req, res) => {
-  try {
-    const credential = {
-      metadata: req.body,
-      file: req.file
-    };
+export const issueCredential = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new ValidationError('No file uploaded');
+  }
 
-    // Generate hash of the credential
-    const hash = await hashCredential(credential);
+  if (!req.body) {
+    throw new ValidationError('No metadata provided');
+  }
 
-    // Sign the hash
-    const signature = await generateSignature(hash);
+  const credential = {
+    metadata: req.body,
+    file: req.file
+  };
 
-    // Add to blockchain and get Merkle proof
-    const { transactionId, merkleProof } = await addToBlockchain(hash);
+  // Generate hash of the credential
+  const hash = await hashCredential(credential);
 
-    // Save credential with signature and Merkle proof
-    const savedCredential = await saveCredential({
-      ...credential,
+  // Sign the hash
+  const signature = await generateSignature(hash);
+
+  // Add to blockchain and get Merkle proof
+  const { transactionId, merkleProof } = await addToBlockchain(hash);
+
+  // Save credential with signature and Merkle proof
+  const savedCredential = await saveCredential({
+    ...credential,
+    hash,
+    signature,
+    merkleProof,
+    blockchainTxId: transactionId
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      id: savedCredential.id,
       hash,
       signature,
       merkleProof,
       blockchainTxId: transactionId
-    });
-
-    res.json({
-      message: 'Credential issued successfully',
-      credential: {
-        id: savedCredential.id,
-        hash,
-        signature,
-        merkleProof,
-        blockchainTxId: transactionId
-      }
-    });
-  } catch (error) {
-    console.error('Error issuing credential:', error);
-    res.status(500).json({ error: 'Failed to issue credential' });
-  }
-};
+    }
+  });
+});
 
 export const getCredential = async (req, res) => {
   try {
@@ -62,37 +66,30 @@ export const getCredential = async (req, res) => {
   }
 };
 
-export const verifyCredential = async (req, res) => {
-  try {
-    const { hash, signature, merkleProof } = req.body;
+export const verifyCredential = asyncHandler(async (req, res) => {
+  const { hash, signature, merkleProof } = req.body;
 
-    // Verify signature
-    const isSignatureValid = await verifySignature(hash, signature);
-    if (!isSignatureValid) {
-      return res.status(400).json({ 
-        valid: false, 
-        error: 'Invalid signature' 
-      });
-    }
+  if (!hash || !signature || !merkleProof) {
+    throw new ValidationError('Missing required fields: hash, signature, or merkleProof');
+  }
 
-    // Verify Merkle proof
-    const isMerkleValid = await verifyMerkleProof(hash, merkleProof);
-    if (!isMerkleValid) {
-      return res.status(400).json({ 
-        valid: false, 
-        error: 'Invalid Merkle proof' 
-      });
-    }
+  // Verify signature
+  const isSignatureValid = await verifySignature(hash, signature);
+  if (!isSignatureValid) {
+    throw new ValidationError('Invalid signature');
+  }
 
-    res.json({ 
+  // Verify Merkle proof
+  const isMerkleValid = await verifyMerkleProof(hash, merkleProof);
+  if (!isMerkleValid) {
+    throw new ValidationError('Invalid Merkle proof');
+  }
+
+  res.json({
+    status: 'success',
+    data: {
       valid: true,
       message: 'Credential verified successfully'
-    });
-  } catch (error) {
-    console.error('Error verifying credential:', error);
-    res.status(500).json({ 
-      valid: false,
-      error: 'Failed to verify credential' 
-    });
-  }
-}; 
+    }
+  });
+}); 

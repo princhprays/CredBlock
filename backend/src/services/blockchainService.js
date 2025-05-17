@@ -4,6 +4,9 @@ import { open } from 'sqlite';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { addCredentialHash, getMerkleRoot, getMerkleProof } from './merkleService.js';
+import { BlockchainError } from '../utils/errors.js';
+import { getCachedData, setCachedData, invalidateCache } from '../utils/cache.js';
+import logger from '../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,29 +18,33 @@ const web3 = process.env.NODE_ENV === 'production'
 
 // Initialize SQLite database
 const initDatabase = async () => {
-  const db = await open({
-    filename: join(__dirname, '../../data/blockchain.db'),
-    driver: sqlite3.Database
-  });
+  try {
+    const db = await open({
+      filename: join(__dirname, '../../data/blockchain.db'),
+      driver: sqlite3.Database
+    });
 
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS blocks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      merkleRoot TEXT NOT NULL,
-      previousHash TEXT,
-      timestamp INTEGER NOT NULL,
-      transactionId TEXT
-    );
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS blocks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        merkleRoot TEXT NOT NULL,
+        previousHash TEXT,
+        timestamp INTEGER NOT NULL,
+        transactionId TEXT
+      );
 
-    CREATE TABLE IF NOT EXISTS credentials (
-      hash TEXT PRIMARY KEY,
-      merkleProof TEXT NOT NULL,
-      blockId INTEGER,
-      FOREIGN KEY (blockId) REFERENCES blocks(id)
-    );
-  `);
+      CREATE TABLE IF NOT EXISTS credentials (
+        hash TEXT PRIMARY KEY,
+        merkleProof TEXT NOT NULL,
+        blockId INTEGER,
+        FOREIGN KEY (blockId) REFERENCES blocks(id)
+      );
+    `);
 
-  return db;
+    return db;
+  } catch (error) {
+    throw new BlockchainError('Failed to initialize database');
+  }
 };
 
 const db = await initDatabase();
@@ -68,6 +75,10 @@ export const addToBlockchain = async (hash) => {
         [hash, JSON.stringify(proof), result.lastID]
       );
 
+      // Invalidate relevant caches
+      await invalidateCache('blockchain/snapshot');
+      await invalidateCache(`blockchain/verify/${hash}`);
+
       return { 
         transactionId: transaction.transactionHash,
         merkleProof: proof
@@ -86,49 +97,76 @@ export const addToBlockchain = async (hash) => {
         [hash, JSON.stringify(proof), result.lastID]
       );
 
+      // Invalidate relevant caches
+      await invalidateCache('blockchain/snapshot');
+      await invalidateCache(`blockchain/verify/${hash}`);
+
       return { 
         transactionId: mockTxId,
         merkleProof: proof
       };
     }
   } catch (error) {
-    console.error('Error adding to blockchain:', error);
-    throw new Error('Failed to add to blockchain');
+    throw new BlockchainError('Failed to add to blockchain: ' + error.message);
   }
 };
 
 export const getBlockchainSnapshot = async () => {
   try {
+    // Try to get from cache first
+    const cachedSnapshot = await getCachedData('blockchain/snapshot');
+    if (cachedSnapshot) {
+      logger.debug('Returning cached blockchain snapshot');
+      return cachedSnapshot;
+    }
+
     const blocks = await db.all('SELECT * FROM blocks ORDER BY timestamp ASC');
     const credentials = await db.all('SELECT * FROM credentials');
     
-    return {
+    const snapshot = {
       blocks,
       credentials,
       currentMerkleRoot: getMerkleRoot()
     };
+
+    // Cache the snapshot for 5 minutes
+    await setCachedData('blockchain/snapshot', snapshot, 300);
+    
+    return snapshot;
   } catch (error) {
-    console.error('Error getting blockchain snapshot:', error);
-    throw new Error('Failed to get blockchain snapshot');
+    throw new BlockchainError('Failed to get blockchain snapshot: ' + error.message);
   }
 };
 
 export const verifyBlockchainHash = async (hash) => {
   try {
+    // Try to get from cache first
+    const cachedVerification = await getCachedData(`blockchain/verify/${hash}`);
+    if (cachedVerification !== null) {
+      logger.debug(`Returning cached verification for hash: ${hash}`);
+      return cachedVerification;
+    }
+
     const credential = await db.get('SELECT * FROM credentials WHERE hash = ?', [hash]);
     if (!credential) {
+      await setCachedData(`blockchain/verify/${hash}`, false, 300);
       return false;
     }
 
     const block = await db.get('SELECT * FROM blocks WHERE id = ?', [credential.blockId]);
     if (!block) {
+      await setCachedData(`blockchain/verify/${hash}`, false, 300);
       return false;
     }
 
     const proof = JSON.parse(credential.merkleProof);
-    return getMerkleProof(hash, proof, block.merkleRoot);
+    const isValid = getMerkleProof(hash, proof, block.merkleRoot);
+    
+    // Cache the verification result for 5 minutes
+    await setCachedData(`blockchain/verify/${hash}`, isValid, 300);
+    
+    return isValid;
   } catch (error) {
-    console.error('Error verifying blockchain hash:', error);
-    throw new Error('Failed to verify blockchain hash');
+    throw new BlockchainError('Failed to verify blockchain hash: ' + error.message);
   }
 }; 

@@ -1,10 +1,6 @@
 import express from 'express';
-import { 
-  addHashToBlockchain,
-  getBlockchain,
-  verifyHash
-} from '../controllers/blockchainController.js';
-import { validate } from '../middleware/validation.js';
+import { addHashToBlockchain, getBlockchain, verifyHash } from '../controllers/blockchainController.js';
+import { validateRequest } from '../middleware/validation.js';
 import { blockchainSchema } from '../schemas/blockchainSchema.js';
 import { apiLimiter } from '../middleware/rateLimiter.js';
 
@@ -51,7 +47,7 @@ const router = express.Router();
  *       429:
  *         description: Too many requests
  */
-router.post('/', apiLimiter, validate(blockchainSchema), addHashToBlockchain);
+router.post('/', apiLimiter, validateRequest(blockchainSchema), addHashToBlockchain);
 
 /**
  * @swagger
