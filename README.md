@@ -112,11 +112,9 @@ API documentation is available at `/api-docs` when running the backend server.
 This project is licensed under the MIT License.
 
 ## 🎓 Author
-
-Paul Antigo (PJ)
-- 2nd Year BSCS Student
-- Masinloc, Zambales
-- GitHub: [@princhprays](https://github.com/princhprays)
+Tan, Georg Mikhael
+Antigo, Paul john E.
+- BSCS Student
 
 ## 🤝 Contributing
 
