@@ -1,77 +1,53 @@
-# 🎓 CredBlock
+# CredBlock - Academic Credential Verification System
 
-**Full-Stack Academic Credential Verifier Using Blockchain Principles**
+A full-stack application for issuing and verifying academic credentials using blockchain technology.
 
-CredBlock is a full-stack application designed to verify academic credentials using blockchain and digital signatures, with full offline support. It allows universities to issue digitally signed credentials and provides an offline-capable verifier for employers and institutions.
-
-## 🌟 Features
+## Features
 
 - ✅ Issue academic certificates with digital signatures
-- 🔐 Store credential hashes on blockchain (Ethereum or mock)
-- 📥 Download blockchain snapshots for offline verification
-- 📄 Support for PDF and JSON credential formats
-- ⚙️ Modern React frontend with TypeScript
-- 📦 Offline verification using local blockchain data
-- 🔍 RSA digital signature verification
-- 🧾 Clear validation results: `✅ Valid` or `❌ Invalid`
+- 🔐 Store credential hashes on blockchain (Ethereum)
+- 📱 Offline verification support
+- 🔍 Real-time credential verification
+- 📊 Dashboard for credential management
+- 🔒 Secure digital signatures
+- 📦 Offline snapshots for verification
 
-## 🏗️ Tech Stack
+## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | React + TypeScript + Vite |
-| Backend | Node.js + Express |
-| Database | SQLite |
-| Blockchain | Ethereum/Web3.js |
-| Crypto | node-forge (RSA) |
-| UI | Tailwind CSS + Radix UI |
+### Frontend
+- React + TypeScript
+- Tailwind CSS
+- Vite
+- React Router
+- React Query
 
-## 📁 Project Structure
+### Backend
+- Node.js + Express
+- SQLite (with Knex.js)
+- Redis (optional, for caching)
+- JWT Authentication
+
+### Blockchain
+- Ethereum (Web3.js)
+- Smart Contracts for credential storage
+
+## Project Structure
 
 ```
-/credblock/
-├── backend/           # Node.js backend
-│   ├── controllers/   # Request handlers
-│   ├── routes/        # API routes
-│   ├── services/      # Business logic
-│   ├── keys/          # RSA keys
-│   ├── data/          # Database and files
-│   └── server.js      # Entry point
-├── frontend/          # React frontend
-│   ├── public/        # Static files
-│   ├── src/           # Source code
-│   │   ├── components/# React components
-│   │   ├── pages/     # Page components
-│   │   ├── utils/     # Utility functions
-│   │   └── App.tsx    # Main component
-├── credentials/       # Sample credentials
-├── tests/            # Unit tests
-├── README.md
-└── package.json
+credblock/
+├── frontend/          # React frontend application
+├── backend/           # Node.js backend server
+│   ├── src/          # Source code
+│   ├── migrations/   # Database migrations
+│   └── data/         # Database and snapshots
+└── contracts/        # Smart contracts
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-- SQLite3
-- (Optional) Ethereum node for production
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/princhprays/credblock.git
-   cd credblock
-   ```
-
+1. Clone the repository
 2. Install dependencies:
    ```bash
-   # Install root dependencies
-   npm install
-
    # Install backend dependencies
    cd backend
    npm install
@@ -81,85 +57,61 @@ CredBlock is a full-stack application designed to verify academic credentials us
    npm install
    ```
 
-3. Generate RSA keys:
-   ```bash
-   cd backend
-   npm run generate-keys
-   ```
-
-4. Set up environment variables:
+3. Set up environment variables:
    ```bash
    # Backend (.env)
    PORT=3001
    NODE_ENV=development
-   ETHEREUM_NODE_URL=http://localhost:8545  # For production
-   CONTRACT_ADDRESS=0x...                   # For production
-
-   # Frontend (.env)
-   VITE_API_URL=http://localhost:3001
+   JWT_SECRET=your_jwt_secret
    ```
 
-5. Start the development servers:
+4. Start the development servers:
    ```bash
-   # From root directory
-   npm start
-   ```
+   # Start backend
+   cd backend
+   npm run dev
 
-## 🛠️ Development
-
-- Backend runs on http://localhost:3001
-- Frontend runs on http://localhost:5173
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-npm test
-
-# Run backend tests
-cd backend
-npm test
-
-# Run frontend tests
-cd frontend
-npm test
-```
-
-## 📦 Production Deployment
-
-1. Build the frontend:
-   ```bash
+   # Start frontend
    cd frontend
-   npm run build
+   npm run dev
    ```
 
-2. Build the backend:
-   ```bash
-   cd backend
-   npm run build
-   ```
+## Features
 
-3. Set up environment variables for production
+### Credential Issuance
+- ✅ University can issue academic certificates with digital signatures
+- 🔐 Hashes of credentials are stored on a blockchain (Ethereum)
+- 📝 Support for various academic credentials (degrees, certificates, etc.)
 
-4. Start the production server:
-   ```bash
-   cd backend
-   npm start
-   ```
+### Verification
+- 🔍 Real-time verification of credentials
+- 📱 Offline verification support
+- 🔒 Secure digital signatures
+- 📦 Offline snapshots for verification
 
-## 🔒 Security Features
+### Security
+- 🔐 Blockchain-based verification
+- 🔒 Digital signatures
+- 🔑 JWT authentication
+- 🔒 Secure storage of credentials
 
-- RSA public/private key pairs for digital signatures
-- Blockchain-based hash storage for immutability
-- Offline verification capability
-- Secure file handling and validation
-- Environment-based configuration
+## API Documentation
 
-## 📝 License
+API documentation is available at `/api-docs` when running the backend server.
 
-MIT
+## Contributing
 
-## 👨‍🎓 Author
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request
+
+## License
+
+This project is licensed under the MIT License.
+
+## 🎓 Author
 
 Paul Antigo (PJ)
 - 2nd Year BSCS Student
@@ -226,10 +178,10 @@ npm run dev
 
 📄 Credential Format
 {
-  "name": "Paul Antigo",
-  "degree": "BSCS",
+  "name": "your name",
+  "degree": "your degree",
   "graduationDate": "yyyy-mm-dd",
-  "issuer": "University",
+  "issuer": "your university",
   "signature": "BASE64_ENCODED_SIGNATURE"
 }
 
@@ -258,8 +210,9 @@ The digital signature proves the credential came from the university.
 Blockchain snapshot is verifiable offline and tamper-proof.
 
 👨‍🎓 Author
-Paul Antigo (PJ)
+Tan, Georg Mikhael
+Antigo, Paul john E.
 2nd Year BSCS Student
 Masinloc, Zambales
-GitHub: [https://github.com/princhprays]
+GitHub: [https://github.com/princhprays/CredBlock]
 
